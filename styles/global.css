@@ -1,0 +1,695 @@
+@font-face {
+  font-family: 'BitBold';
+  font-style: normal;
+  font-weight: normal;
+  font-display: swap;
+  src: url(/fonts/BitBold.ttf) format('truetype');
+}
+
+* {
+  font-family: 'BitBold', sans-serif;
+  font-size: 16px;
+}
+
+body {
+  display: grid;
+  height: 100vh;
+  background-color: #1f8b00;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  min-height: 100vh;
+}
+
+canvas {
+  border: #bdbd16 solid 5px;
+  border-radius: 20px;
+  box-shadow:
+    rgba(50, 50, 93, 0.25) 0px 13px 27px -5px,
+    rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+  max-width: 100%;
+  height: auto;
+}
+
+button {
+  background-color: #8e001c;
+  border: 0px;
+  border-radius: 5px;
+  color: white;
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 500ms;
+}
+
+#bomberman-container {
+  width: 100%;
+  max-width: 1024px;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+/* Desktop Styles - Larger game screen */
+@media screen and (min-width: 1025px) {
+  #bomberman-container {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  canvas {
+    max-width: 1280px;
+  }
+
+  main {
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+}
+
+/* Mobile container scaling */
+.is-mobile-device #bomberman-container,
+body.is-mobile-device #bomberman-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto;
+}
+
+@media screen and (max-width: 767px) {
+  #bomberman-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto;
+  }
+}
+
+#game-controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  row-gap: 30px;
+  padding-top: 30px;
+}
+
+/* Mobile Touch Controls */
+#mobile-controls {
+  display: none; /* Hidden by default on desktop */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 8px;
+  background: rgba(31, 139, 0, 0.95);
+  border-top: 3px solid #bdbd16;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Show mobile controls when mobile device is detected (JavaScript adds class) */
+.is-mobile-device #mobile-controls,
+body.is-mobile-device #mobile-controls,
+html.is-mobile-device #mobile-controls {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Also show with media query for devices that might not have JS or class detection */
+@media screen and (max-width: 767px) {
+  #mobile-controls {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Ensure all mobile control elements are visible */
+  #joystick-container,
+  #joystick-base,
+  #joystick-stick,
+  .mobile-controls-left,
+  .mobile-controls-right,
+  .mobile-controls-center,
+  #mobile-game-controls {
+    display: flex !important;
+    visibility: visible !important;
+  }
+
+  .mobile-controls-grid {
+    display: grid !important;
+    visibility: visible !important;
+  }
+
+  #mobile-controls button,
+  .mobile-controls-right button,
+  #mobile-game-controls button {
+    display: flex !important;
+    visibility: visible !important;
+  }
+}
+
+/* Ensure mobile controls are visible when mobile device class is present */
+.is-mobile-device #joystick-container,
+.is-mobile-device #joystick-base,
+.is-mobile-device #joystick-stick,
+body.is-mobile-device #joystick-container,
+body.is-mobile-device #joystick-base,
+body.is-mobile-device #joystick-stick {
+  display: block !important;
+  visibility: visible !important;
+}
+
+.is-mobile-device #joystick-container,
+body.is-mobile-device #joystick-container {
+  position: relative !important;
+}
+
+.is-mobile-device .mobile-controls-left,
+.is-mobile-device .mobile-controls-right,
+.is-mobile-device .mobile-controls-center,
+.is-mobile-device #mobile-game-controls,
+body.is-mobile-device .mobile-controls-left,
+body.is-mobile-device .mobile-controls-right,
+body.is-mobile-device .mobile-controls-center,
+body.is-mobile-device #mobile-game-controls {
+  display: flex !important;
+  visibility: visible !important;
+}
+
+.is-mobile-device .mobile-controls-grid,
+body.is-mobile-device .mobile-controls-grid {
+  display: grid !important;
+  visibility: visible !important;
+}
+
+.is-mobile-device #mobile-controls button,
+.is-mobile-device .mobile-controls-right button,
+.is-mobile-device #mobile-game-controls button,
+body.is-mobile-device #mobile-controls button,
+body.is-mobile-device .mobile-controls-right button,
+body.is-mobile-device #mobile-game-controls button {
+  display: flex !important;
+  visibility: visible !important;
+}
+
+#mobile-controls.active {
+  display: block;
+}
+
+.mobile-controls-grid {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  max-width: 100%;
+  margin: 0 auto;
+  align-items: center;
+  width: 100%;
+}
+
+.mobile-controls-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  position: relative;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Center section for game controls */
+.mobile-controls-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 0 8px;
+}
+
+#mobile-game-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+#mobile-game-controls button {
+  min-height: 48px;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: 'BitBold', sans-serif;
+  border: 2px solid #bdbd16;
+  background-color: rgba(142, 0, 28, 0.9);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  padding: 10px 16px;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 140px;
+  text-align: center;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.15s;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#mobile-game-controls button:active {
+  background-color: #8e001c;
+  transform: scale(0.96);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Override GitHub button styles */
+#mobile-game-controls .github-button {
+  min-height: 48px !important;
+  font-size: 13px !important;
+  font-weight: bold !important;
+  font-family: 'BitBold', sans-serif !important;
+  border: 2px solid #bdbd16 !important;
+  background-color: rgba(142, 0, 28, 0.9) !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  padding: 10px 16px !important;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 140px;
+  text-align: center;
+  color: white !important;
+  text-decoration: none !important;
+  border-radius: 6px !important;
+  transition: all 0.15s;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#mobile-game-controls .github-button:hover,
+#mobile-game-controls .github-button:active,
+#mobile-game-controls .github-button:focus {
+  background-color: #8e001c !important;
+  transform: scale(0.96);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+  color: white !important;
+  text-decoration: none !important;
+}
+
+/* Hide GitHub button default SVG icon */
+#mobile-game-controls .github-button svg {
+  display: none !important;
+}
+
+/* Style the count badge if it exists */
+#mobile-game-controls .github-button .btn-count,
+#mobile-game-controls .github-button .social-count {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  margin-left: 6px !important;
+  font-size: 11px !important;
+}
+
+/* Joystick Styles */
+#joystick-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  touch-action: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#joystick-base {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  top: 50%;
+  left: 50%;
+  margin: -50px 0 0 -50px; /* Half of width and height to center */
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(142, 0, 28, 0.3);
+  border: 3px solid #bdbd16;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+#joystick-stick {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(142, 0, 28, 0.9);
+  border: 2px solid #bdbd16;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  transition: transform 0.15s ease-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  pointer-events: none;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+#joystick-stick.active {
+  background: rgba(142, 0, 28, 1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+  transition: none;
+  transform-origin: center center;
+}
+
+/* Hide any old button styles */
+.mobile-controls-left button {
+  display: none;
+}
+
+.mobile-controls-right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+  align-items: flex-end;
+  flex: 1;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.mobile-controls-right button {
+  min-height: 48px;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: 'BitBold', sans-serif;
+  border: 2px solid #bdbd16;
+  background-color: rgba(142, 0, 28, 0.9);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  padding: 10px 16px;
+  white-space: nowrap;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.15s;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 130px;
+}
+
+.mobile-controls-right button:active {
+  background-color: #8e001c;
+  transform: scale(0.96);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Mobile Styles */
+@media screen and (max-width: 767px), (is-mobile-device) {
+  * {
+    font-size: 14px;
+  }
+
+  body {
+    overflow-y: auto;
+  }
+
+  main {
+    padding: 5px !important;
+    padding-bottom: 180px !important; /* Extra padding to prevent game from being covered by controls */
+    min-height: auto;
+    height: auto;
+  }
+
+  #bomberman-container {
+    width: 100%;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-bottom: 10px;
+  }
+
+  #mobile-controls {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Ensure joystick and all buttons are visible */
+  #joystick-container,
+  #joystick-base,
+  #joystick-stick {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  #joystick-container {
+    position: relative !important;
+  }
+
+  .mobile-controls-left {
+    display: flex !important;
+    visibility: visible !important;
+  }
+
+  .mobile-controls-right {
+    display: flex !important;
+    visibility: visible !important;
+  }
+
+  .mobile-controls-center {
+    display: flex !important;
+    visibility: visible !important;
+  }
+
+  #mobile-game-controls {
+    display: flex !important;
+    visibility: visible !important;
+  }
+
+  .mobile-controls-grid {
+    display: grid !important;
+    visibility: visible !important;
+  }
+
+  /* Hide original game-controls on mobile, show mobile version instead */
+  #game-controls {
+    display: none;
+  }
+
+  button {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  canvas {
+    border-width: 3px;
+    border-radius: 8px;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: calc(
+      100vh - 180px
+    ) !important; /* Account for controls height */
+  }
+}
+
+/* Also apply mobile styles when mobile device class is detected */
+.is-mobile-device main,
+body.is-mobile-device main {
+  padding: 5px !important;
+  padding-bottom: 180px !important; /* Extra padding to prevent game from being covered */
+  min-height: auto;
+  height: auto;
+}
+
+.is-mobile-device #bomberman-container,
+body.is-mobile-device #bomberman-container {
+  width: 100%;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 10px;
+}
+
+.is-mobile-device canvas,
+body.is-mobile-device canvas {
+  max-height: calc(100vh - 180px) !important;
+}
+
+.is-mobile-device #game-controls,
+body.is-mobile-device #game-controls {
+  display: none;
+}
+
+/* Small mobile devices */
+@media screen and (max-width: 480px) {
+  .mobile-controls-left {
+    width: 100px;
+    height: 100px;
+  }
+
+  #joystick-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  #joystick-stick {
+    width: 45px;
+    height: 45px;
+  }
+
+  .mobile-controls-right button {
+    min-height: 45px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  #mobile-game-controls button,
+  #mobile-game-controls .github-button {
+    min-height: 40px;
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  #mobile-controls {
+    padding: 10px 6px;
+  }
+
+  #bomberman-container {
+    margin-bottom: 0; /* Remove margin since we use padding on main */
+    padding-bottom: 10px;
+  }
+
+  main {
+    padding-bottom: 150px; /* Slightly less for small devices */
+  }
+
+  canvas {
+    max-height: calc(100vh - 150px);
+  }
+}
+
+/* Landscape mobile */
+@media screen and (max-width: 767px) and (orientation: landscape) {
+  html,
+  body {
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  main {
+    padding: 0 !important;
+    padding-bottom: 110px !important; /* Padding for controls in landscape */
+    min-height: 100vh;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #bomberman-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    height: auto;
+    min-width: 100%;
+  }
+
+  canvas {
+    border-width: 2px;
+    border-radius: 4px;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    max-height: calc(
+      100vh - 110px
+    ) !important; /* Account for controls in landscape */
+    object-fit: contain;
+    display: block;
+  }
+
+  #mobile-controls {
+    padding: 8px 6px !important;
+    border-top: 2px solid #bdbd16 !important;
+    background: rgba(31, 139, 0, 0.95) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  .mobile-controls-left {
+    width: 80px;
+    height: 80px;
+  }
+
+  #joystick-container {
+    width: 80px;
+    height: 80px;
+  }
+
+  #joystick-base {
+    width: 80px;
+    height: 80px;
+    margin: -40px 0 0 -40px;
+  }
+
+  #joystick-stick {
+    width: 35px;
+    height: 35px;
+  }
+
+  .mobile-controls-grid {
+    gap: 6px;
+    padding: 0 3px;
+  }
+
+  .mobile-controls-right button {
+    min-height: 35px;
+    font-size: 11px;
+    padding: 5px 8px;
+    min-width: 75px;
+    max-width: 95px;
+  }
+
+  #mobile-game-controls {
+    gap: 5px;
+  }
+}
+
+/* Tablet Styles */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  #bomberman-container {
+    width: 100%;
+    max-width: 768px;
+  }
+}
