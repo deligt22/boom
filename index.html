@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="google-site-verification"
+      content="%VITE_GOOGLE_VERIFICATION_ID%"
+    />
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <!-- Preload font to use in Phaser.js, otherwise it will be taken as a fallback (I don't know the reason) -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/ttf"
+      href="/fonts/BitBold.ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="/styles/global.css" />
+    <link rel="stylesheet" href="/styles/dialog.css" />
+
+    <title>Bomberman (NES)</title>
+    <script type="module" crossorigin src="/assets/index-C2hct3bC.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/phaser-DJc9ez-r.js">
+  </head>
+  <body>
+    <script>
+      // Mobile device detection - runs immediately before DOM is ready
+      (function () {
+        function detectMobileDevice() {
+          // Check for touch capability
+          const hasTouch =
+            'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            (window.matchMedia &&
+              window.matchMedia('(pointer: coarse)').matches);
+
+          // Check user agent for mobile/tablet patterns
+          const userAgent =
+            navigator.userAgent || navigator.vendor || window.opera || '';
+          const isMobileUA =
+            /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+              userAgent.toLowerCase()
+            );
+
+          // Check for tablet (iPad Pro has mouse but is still a tablet)
+          const isTablet = /ipad|android(?!.*mobile)|tablet/i.test(
+            userAgent.toLowerCase()
+          );
+
+          // Consider it mobile if:
+          // 1. Has touch capability AND (mobile UA OR tablet), OR
+          // 2. Screen width suggests mobile device with touch
+          const isMobile =
+            hasTouch && (isMobileUA || isTablet || window.innerWidth <= 1024);
+
+          if (isMobile) {
+            document.body.classList.add('is-mobile-device');
+            document.documentElement.classList.add('is-mobile-device');
+          } else {
+            document.body.classList.remove('is-mobile-device');
+            document.documentElement.classList.remove('is-mobile-device');
+          }
+
+          return isMobile;
+        }
+
+        // Run immediately when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', detectMobileDevice);
+        } else {
+          detectMobileDevice();
+        }
+
+        // Also run on resize/orientation change (in case device is rotated or browser is resized)
+        var resizeTimeout;
+        window.addEventListener('resize', function () {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(detectMobileDevice, 150);
+        });
+
+        window.addEventListener('orientationchange', function () {
+          setTimeout(detectMobileDevice, 100);
+        });
+      })();
+    </script>
+    <main>
+      <div id="bomberman-container"></div>
+
+      <!-- <div id="game-controls">
+        <button onclick="constrolsModal.showModal()">How to play?</button>
+      </div> -->
+
+      <!-- Mobile Touch Controls -->
+      <div id="mobile-controls">
+        <div class="mobile-controls-grid">
+          <div class="mobile-controls-left">
+            <!-- Joystick -->
+            <div id="joystick-container">
+              <div id="joystick-base"></div>
+              <div id="joystick-stick"></div>
+            </div>
+          </div>
+          <!-- <div class="mobile-controls-center">
+            <div id="mobile-game-controls">
+              <button onclick="constrolsModal.showModal()">How to play?</button>
+            </div>
+          </div> -->
+          <div class="mobile-controls-right">
+            <button
+              onmousedown="if(window.touchControlPutBomb) window.touchControlPutBomb(true)"
+              onmouseup="if(window.touchControlPutBomb) window.touchControlPutBomb(false)"
+              ontouchstart="event.preventDefault(); if(window.touchControlPutBomb) window.touchControlPutBomb(true)"
+              ontouchend="event.preventDefault(); if(window.touchControlPutBomb) window.touchControlPutBomb(false)"
+              aria-label="Put Bomb"
+            >
+              💣 BOMB
+            </button>
+            <!-- <button
+              onmousedown="if(window.touchControlExploitBomb) window.touchControlExploitBomb(true)"
+              onmouseup="if(window.touchControlExploitBomb) window.touchControlExploitBomb(false)"
+              ontouchstart="event.preventDefault(); if(window.touchControlExploitBomb) window.touchControlExploitBomb(true)"
+              ontouchend="event.preventDefault(); if(window.touchControlExploitBomb) window.touchControlExploitBomb(false)"
+              aria-label="Explode Bomb"
+            >
+              💥 EXPLODE
+            </button> -->
+          </div>
+        </div>
+      </div>
+
+      <dialog id="constrolsModal">
+        <form method="dialog" class="btn-close">
+          <button type="submit" autofocus>x</button>
+        </form>
+
+        <div class="dialog-body">
+          <section>
+            <div>
+              <img
+                src="/images/arrow-keys.png"
+                width="90"
+                height="60"
+                alt="Key Up"
+              />
+            </div>
+
+            <p>To move your player</p>
+          </section>
+
+          <section>
+            <img src="/images/x-key.png" width="60" height="60" alt="Key Up" />
+
+            <p>To put any bomb</p>
+          </section>
+
+          <section>
+            <img
+              src="/images/space-key.png"
+              width="60"
+              height="60"
+              alt="Key Up"
+            />
+
+            <p>To explode a bomb</p>
+          </section>
+
+          <section>
+            <img src="/images/s-key.png" width="60" height="60" alt="Key Up" />
+
+            <p>To save the game</p>
+          </section>
+        </div>
+      </dialog>
+    </main>
+
+    <!-- Github Button -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+    <!-- Joystick Control Script -->
+    <script>
+      (function () {
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystickStick = document.getElementById('joystick-stick');
+
+        if (!joystickContainer || !joystickStick) return;
+
+        let isActive = false;
+        let centerX = 0;
+        let centerY = 0;
+        let maxDistance = 0;
+        let currentDirection = {
+          up: false,
+          down: false,
+          left: false,
+          right: false
+        };
+
+        // Calculate center and max distance
+        function updateJoystickBounds() {
+          const rect = joystickContainer.getBoundingClientRect();
+          centerX = rect.left + rect.width / 2;
+          centerY = rect.top + rect.height / 2;
+          maxDistance = rect.width / 2 - 25; // Leave some margin for stick size
+        }
+
+        // Calculate direction from angle
+        function getDirectionFromAngle(angle) {
+          // Convert angle to degrees and normalize to 0-360
+          // In screen coordinates: dy < 0 means up (270 degrees), dy > 0 means down (90 degrees)
+          const degrees = ((angle * 180) / Math.PI + 360) % 360;
+
+          // Determine direction (using 45 degree sectors)
+          // Up: 225-315 degrees (when touching upward, dy < 0, angle is around 270)
+          // Down: 45-135 degrees (when touching downward, dy > 0, angle is around 90)
+          // Left: 135-225 degrees
+          // Right: 315-45 degrees (wraps around)
+          const up = degrees >= 225 && degrees < 315;
+          const down = degrees >= 45 && degrees < 135;
+          const left = degrees >= 135 && degrees < 225;
+          const right = degrees >= 315 || degrees < 45;
+
+          return { up, down, left, right };
+        }
+
+        // Update controls and visual position
+        function updateJoystick(x, y) {
+          const dx = x - centerX;
+          const dy = y - centerY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // Limit distance to max
+          const limitedDistance = Math.min(distance, maxDistance);
+          const angle = Math.atan2(dy, dx);
+
+          // Calculate stick position
+          const stickX = Math.cos(angle) * limitedDistance;
+          const stickY = Math.sin(angle) * limitedDistance;
+
+          // Update visual position
+          joystickStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
+
+          // Calculate direction based on angle
+          const newDirection = getDirectionFromAngle(angle);
+
+          // Only update if direction changed to avoid repeated calls
+          if (distance > 10) {
+            // Dead zone threshold
+            // Update controls
+            if (
+              newDirection.up !== currentDirection.up &&
+              window.touchControlUp
+            ) {
+              window.touchControlUp(newDirection.up);
+            }
+            if (
+              newDirection.down !== currentDirection.down &&
+              window.touchControlDown
+            ) {
+              window.touchControlDown(newDirection.down);
+            }
+            if (
+              newDirection.left !== currentDirection.left &&
+              window.touchControlLeft
+            ) {
+              window.touchControlLeft(newDirection.left);
+            }
+            if (
+              newDirection.right !== currentDirection.right &&
+              window.touchControlRight
+            ) {
+              window.touchControlRight(newDirection.right);
+            }
+            currentDirection = newDirection;
+          } else {
+            // Reset all directions in dead zone
+            if (currentDirection.up && window.touchControlUp)
+              window.touchControlUp(false);
+            if (currentDirection.down && window.touchControlDown)
+              window.touchControlDown(false);
+            if (currentDirection.left && window.touchControlLeft)
+              window.touchControlLeft(false);
+            if (currentDirection.right && window.touchControlRight)
+              window.touchControlRight(false);
+            currentDirection = {
+              up: false,
+              down: false,
+              left: false,
+              right: false
+            };
+          }
+        }
+
+        // Reset joystick to center
+        function resetJoystick() {
+          joystickStick.style.transform = 'translate(-50%, -50%)';
+          joystickStick.classList.remove('active');
+          isActive = false;
+
+          // Reset all controls
+          if (window.touchControlUp) window.touchControlUp(false);
+          if (window.touchControlDown) window.touchControlDown(false);
+          if (window.touchControlLeft) window.touchControlLeft(false);
+          if (window.touchControlRight) window.touchControlRight(false);
+          currentDirection = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+          };
+        }
+
+        // Get touch or mouse coordinates
+        function getCoordinates(e) {
+          if (e.touches && e.touches.length > 0) {
+            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }
+          return { x: e.clientX, y: e.clientY };
+        }
+
+        // Start handlers
+        function onStart(e) {
+          e.preventDefault();
+          updateJoystickBounds();
+          isActive = true;
+          joystickStick.classList.add('active');
+          const coords = getCoordinates(e);
+          updateJoystick(coords.x, coords.y);
+        }
+
+        // Move handlers
+        function onMove(e) {
+          if (!isActive) return;
+          e.preventDefault();
+          const coords = getCoordinates(e);
+          updateJoystick(coords.x, coords.y);
+        }
+
+        // End handlers
+        function onEnd(e) {
+          if (!isActive) return;
+          e.preventDefault();
+          resetJoystick();
+        }
+
+        // Attach event listeners
+        joystickContainer.addEventListener('mousedown', onStart);
+        joystickContainer.addEventListener('touchstart', onStart, {
+          passive: false
+        });
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove, { passive: false });
+
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchend', onEnd);
+        document.addEventListener('touchcancel', onEnd);
+
+        // Update bounds on resize
+        window.addEventListener('resize', updateJoystickBounds);
+        updateJoystickBounds();
+      })();
+    </script>
+  </body>
+</html>
