@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="screen-orientation" content="landscape" />
     <meta
       name="google-site-verification"
       content="%VITE_GOOGLE_VERIFICATION_ID%"
@@ -25,6 +26,61 @@
     <link rel="modulepreload" crossorigin href="/boom/assets/phaser-DJc9ez-r.js">
   </head>
   <body>
+    <script>
+      // Auto-rotate to landscape on mobile
+      (function () {
+        function lockOrientation() {
+          // Check if device is mobile
+          const isMobile =
+            /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+              navigator.userAgent.toLowerCase()
+            ) ||
+            (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+
+          if (!isMobile) return;
+
+          // Try to lock orientation to landscape
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation
+              .lock('landscape')
+              .then(() => {
+                console.log('Screen orientation locked to landscape');
+              })
+              .catch((err) => {
+                console.log('Could not lock orientation:', err);
+              });
+          } else if (screen.lockOrientation) {
+            // Fallback for older browsers
+            screen.lockOrientation('landscape');
+          } else if (screen.mozLockOrientation) {
+            // Firefox
+            screen.mozLockOrientation('landscape');
+          } else if (screen.msLockOrientation) {
+            // IE/Edge
+            screen.msLockOrientation('landscape');
+          }
+        }
+
+        // Lock on load
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', lockOrientation);
+        } else {
+          lockOrientation();
+        }
+
+        // Also try on orientation change (in case user rotates back)
+        window.addEventListener('orientationchange', () => {
+          setTimeout(lockOrientation, 100);
+        });
+
+        // Try when window becomes visible (handles tab switching)
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) {
+            setTimeout(lockOrientation, 100);
+          }
+        });
+      })();
+    </script>
     <script>
       // Mobile device detection - runs immediately before DOM is ready
       (function () {
