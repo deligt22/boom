@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="/boom/styles/dialog.css" />
 
     <title>Bomberman (NES)</title>
-    <script type="module" crossorigin src="/boom/assets/index-Te3LQq-1.js"></script>
+    <script type="module" crossorigin src="/boom/assets/index-BCgUYZ4D.js"></script>
     <link rel="modulepreload" crossorigin href="/boom/assets/phaser-DJc9ez-r.js">
   </head>
   <body>
@@ -142,6 +142,35 @@
         window.addEventListener('orientationchange', function () {
           setTimeout(detectMobileDevice, 100);
         });
+      })();
+    </script>
+    <script>
+      // Try to enter fullscreen on first interaction (mobile browsers require user gesture)
+      (function () {
+        function isMobile() {
+          const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+          const ua = (navigator.userAgent || navigator.vendor || window.opera || '').toLowerCase();
+          return hasTouch && /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|tablet/.test(ua);
+        }
+
+        function requestFs() {
+          const root = document.documentElement;
+          const anyRoot = root;
+          const req = root.requestFullscreen || anyRoot.webkitRequestFullscreen || anyRoot.msRequestFullscreen || anyRoot.mozRequestFullScreen;
+          if (req) {
+            try { req.call(root); } catch (e) { /* ignore */ }
+          }
+        }
+
+        if (isMobile()) {
+          const once = () => {
+            requestFs();
+            window.removeEventListener('touchstart', once);
+            window.removeEventListener('click', once);
+          };
+          window.addEventListener('touchstart', once, { passive: true });
+          window.addEventListener('click', once, { passive: true });
+        }
       })();
     </script>
     <main>
@@ -268,24 +297,23 @@
           const rect = joystickContainer.getBoundingClientRect();
           centerX = rect.left + rect.width / 2;
           centerY = rect.top + rect.height / 2;
-          maxDistance = rect.width / 2 - 25; // Leave some margin for stick size
+          // Increased max distance for better range - allow joystick to move further
+          maxDistance = rect.width / 2 - 10;
         }
 
-        // Calculate direction from angle
-        function getDirectionFromAngle(angle) {
-          // Convert angle to degrees and normalize to 0-360
-          // In screen coordinates: dy < 0 means up (270 degrees), dy > 0 means down (90 degrees)
-          const degrees = ((angle * 180) / Math.PI + 360) % 360;
-
-          // Determine direction (using 45 degree sectors)
-          // Up: 225-315 degrees (when touching upward, dy < 0, angle is around 270)
-          // Down: 45-135 degrees (when touching downward, dy > 0, angle is around 90)
-          // Left: 135-225 degrees
-          // Right: 315-45 degrees (wraps around)
-          const up = degrees >= 225 && degrees < 315;
-          const down = degrees >= 45 && degrees < 135;
-          const left = degrees >= 135 && degrees < 225;
-          const right = degrees >= 315 || degrees < 45;
+        // Calculate direction based on dx and dy - supports diagonal movement
+        function getDirectionFromDeltas(dx, dy) {
+          const absDx = Math.abs(dx);
+          const absDy = Math.abs(dy);
+          
+          // Threshold for minimum movement to register (very low for sensitivity)
+          const minThreshold = 3;
+          
+          // Determine directions based on actual deltas - allows diagonal movement
+          const up = absDy > minThreshold && dy < 0;
+          const down = absDy > minThreshold && dy > 0;
+          const left = absDx > minThreshold && dx < 0;
+          const right = absDx > minThreshold && dx > 0;
 
           return { up, down, left, right };
         }
@@ -296,7 +324,7 @@
           const dy = y - centerY;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          // Limit distance to max
+          // Limit distance to max for visual stick
           const limitedDistance = Math.min(distance, maxDistance);
           const angle = Math.atan2(dy, dx);
 
@@ -304,58 +332,27 @@
           const stickX = Math.cos(angle) * limitedDistance;
           const stickY = Math.sin(angle) * limitedDistance;
 
-          // Update visual position
+          // Update visual position immediately
           joystickStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
 
-          // Calculate direction based on angle
-          const newDirection = getDirectionFromAngle(angle);
+          // Calculate direction based on deltas - more responsive
+          const newDirection = getDirectionFromDeltas(dx, dy);
 
-          // Only update if direction changed to avoid repeated calls
-          if (distance > 10) {
-            // Dead zone threshold
-            // Update controls
-            if (
-              newDirection.up !== currentDirection.up &&
-              window.touchControlUp
-            ) {
-              window.touchControlUp(newDirection.up);
-            }
-            if (
-              newDirection.down !== currentDirection.down &&
-              window.touchControlDown
-            ) {
-              window.touchControlDown(newDirection.down);
-            }
-            if (
-              newDirection.left !== currentDirection.left &&
-              window.touchControlLeft
-            ) {
-              window.touchControlLeft(newDirection.left);
-            }
-            if (
-              newDirection.right !== currentDirection.right &&
-              window.touchControlRight
-            ) {
-              window.touchControlRight(newDirection.right);
-            }
-            currentDirection = newDirection;
-          } else {
-            // Reset all directions in dead zone
-            if (currentDirection.up && window.touchControlUp)
-              window.touchControlUp(false);
-            if (currentDirection.down && window.touchControlDown)
-              window.touchControlDown(false);
-            if (currentDirection.left && window.touchControlLeft)
-              window.touchControlLeft(false);
-            if (currentDirection.right && window.touchControlRight)
-              window.touchControlRight(false);
-            currentDirection = {
-              up: false,
-              down: false,
-              left: false,
-              right: false
-            };
+          // No dead zone - maximum sensitivity for immediate response
+          // Always update controls immediately when joystick is active
+          if (window.touchControlUp) {
+            window.touchControlUp(newDirection.up);
           }
+          if (window.touchControlDown) {
+            window.touchControlDown(newDirection.down);
+          }
+          if (window.touchControlLeft) {
+            window.touchControlLeft(newDirection.left);
+          }
+          if (window.touchControlRight) {
+            window.touchControlRight(newDirection.right);
+          }
+          currentDirection = newDirection;
         }
 
         // Reset joystick to center
