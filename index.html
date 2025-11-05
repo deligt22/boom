@@ -205,10 +205,10 @@
           </div> -->
           <div class="mobile-controls-right">
             <button
-              onmousedown="if(window.touchControlPutBomb) window.touchControlPutBomb(true)"
-              onmouseup="if(window.touchControlPutBomb) window.touchControlPutBomb(false)"
-              ontouchstart="event.preventDefault(); if(window.touchControlPutBomb) window.touchControlPutBomb(true)"
-              ontouchend="event.preventDefault(); if(window.touchControlPutBomb) window.touchControlPutBomb(false)"
+              onmousedown="event.stopPropagation(); if(window.touchControlPutBomb) window.touchControlPutBomb(true)"
+              onmouseup="event.stopPropagation(); if(window.touchControlPutBomb) window.touchControlPutBomb(false)"
+              ontouchstart="event.preventDefault(); event.stopPropagation(); if(window.touchControlPutBomb) window.touchControlPutBomb(true)"
+              ontouchend="event.preventDefault(); event.stopPropagation(); if(window.touchControlPutBomb) window.touchControlPutBomb(false)"
               aria-label="Put Bomb"
             >
               💣 BOMB
@@ -402,7 +402,9 @@
           e.preventDefault();
           updateJoystickBounds();
           isActive = true;
+          isTouchingJoystick = true;
           joystickStick.classList.add('active');
+          
           const coords = getCoordinates(e);
           updateJoystick(coords.x, coords.y);
         }
@@ -415,11 +417,47 @@
           updateJoystick(coords.x, coords.y);
         }
 
+        // Track if we're currently touching joystick
+        let isTouchingJoystick = false;
+        
         // End handlers
         function onEnd(e) {
           if (!isActive) return;
-          e.preventDefault();
-          resetJoystick();
+          
+          // Get coordinates where touch ended
+          const coords = getCoordinates(e);
+          const rect = joystickContainer.getBoundingClientRect();
+          
+          // Check if touch ended outside joystick container
+          const isOutsideJoystick = 
+            coords.x < rect.left || 
+            coords.x > rect.right || 
+            coords.y < rect.top || 
+            coords.y > rect.bottom;
+          
+          // Get target to check if it's bomb button
+          const target = e.target || (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].target);
+          const isBombButton = target && (
+            target.closest && target.closest('button') ||
+            target.tagName === 'BUTTON' ||
+            (target.closest && target.closest('.mobile-controls-right'))
+          );
+          
+          // Reset joystick if:
+          // 1. Touch ended outside joystick area AND it's not bomb button
+          // 2. OR touch ended on joystick area (means user released finger from joystick)
+          if (isOutsideJoystick && !isBombButton) {
+            // Touch ended outside joystick and not on bomb - reset
+            e.preventDefault();
+            resetJoystick();
+            isTouchingJoystick = false;
+          } else if (!isOutsideJoystick) {
+            // Touch ended inside joystick area - user released finger from joystick
+            e.preventDefault();
+            resetJoystick();
+            isTouchingJoystick = false;
+          }
+          // If touch ended on bomb button, keep joystick active (don't reset)
         }
 
         // Attach event listeners
