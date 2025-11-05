@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="/boom/styles/dialog.css" />
 
     <title>Bomberman (NES)</title>
-    <script type="module" crossorigin src="/boom/assets/index-BCgUYZ4D.js"></script>
+    <script type="module" crossorigin src="/boom/assets/index-Cfrj5ZRJ.js"></script>
     <link rel="modulepreload" crossorigin href="/boom/assets/phaser-DJc9ez-r.js">
   </head>
   <body>
@@ -183,6 +183,26 @@
 
       <div id="bomberman-container"></div>
 
+      <!-- Version Badge -->
+      <div id="version-badge">v2.0.0</div>
+      
+    <script>
+      // Update version badge with build timestamp
+      (function() {
+        const badge = document.getElementById('version-badge');
+        if (badge) {
+          // Add build timestamp to version for easy identification of new builds
+          const buildTime = new Date().toLocaleTimeString('en-US', { 
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          badge.textContent = `v2.0.0 (${buildTime})`;
+          badge.title = `Build: ${new Date().toLocaleString()}`;
+        }
+      })();
+    </script>
+
       <!-- <div id="game-controls">
         <button onclick="constrolsModal.showModal()">How to play?</button>
       </div> -->
@@ -297,23 +317,37 @@
           const rect = joystickContainer.getBoundingClientRect();
           centerX = rect.left + rect.width / 2;
           centerY = rect.top + rect.height / 2;
-          // Increased max distance for better range - allow joystick to move further
-          maxDistance = rect.width / 2 - 10;
+          // Increased max distance for better range - allow joystick to move much further
+          maxDistance = rect.width / 2 - 5;
         }
 
-        // Calculate direction based on dx and dy - supports diagonal movement
+        // Calculate direction based on dx and dy - balanced sensitivity for all directions
         function getDirectionFromDeltas(dx, dy) {
           const absDx = Math.abs(dx);
           const absDy = Math.abs(dy);
           
-          // Threshold for minimum movement to register (very low for sensitivity)
-          const minThreshold = 3;
+          // Very low threshold for maximum sensitivity - same for all directions
+          const threshold = 1;
           
-          // Determine directions based on actual deltas - allows diagonal movement
-          const up = absDy > minThreshold && dy < 0;
-          const down = absDy > minThreshold && dy > 0;
-          const left = absDx > minThreshold && dx < 0;
-          const right = absDx > minThreshold && dx > 0;
+          // Check if movement is significant enough
+          const hasHorizontal = absDx > threshold;
+          const hasVertical = absDy > threshold;
+          
+          // Determine dominant direction - but allow both if needed
+          // If one direction is significantly stronger (2x), prioritize it
+          // Otherwise, allow both directions for diagonal movement
+          const horizontalStronger = absDx > absDy * 2;
+          const verticalStronger = absDy > absDx * 2;
+          
+          // Horizontal directions - activate if horizontal is significant
+          // Allow if horizontal is stronger OR if vertical is not much stronger
+          const left = hasHorizontal && (horizontalStronger || !verticalStronger) && dx < 0;
+          const right = hasHorizontal && (horizontalStronger || !verticalStronger) && dx > 0;
+          
+          // Vertical directions - activate if vertical is significant
+          // Allow if vertical is stronger OR if horizontal is not much stronger
+          const up = hasVertical && (verticalStronger || !horizontalStronger) && dy < 0;
+          const down = hasVertical && (verticalStronger || !horizontalStronger) && dy > 0;
 
           return { up, down, left, right };
         }
@@ -338,19 +372,19 @@
           // Calculate direction based on deltas - more responsive
           const newDirection = getDirectionFromDeltas(dx, dy);
 
-          // No dead zone - maximum sensitivity for immediate response
-          // Always update controls immediately when joystick is active
-          if (window.touchControlUp) {
-            window.touchControlUp(newDirection.up);
-          }
-          if (window.touchControlDown) {
-            window.touchControlDown(newDirection.down);
-          }
+          // Always update all controls immediately when joystick is active
+          // All directions updated equally for balanced responsiveness
           if (window.touchControlLeft) {
             window.touchControlLeft(newDirection.left);
           }
           if (window.touchControlRight) {
             window.touchControlRight(newDirection.right);
+          }
+          if (window.touchControlUp) {
+            window.touchControlUp(newDirection.up);
+          }
+          if (window.touchControlDown) {
+            window.touchControlDown(newDirection.down);
           }
           currentDirection = newDirection;
         }
