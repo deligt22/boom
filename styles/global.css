@@ -551,6 +551,126 @@ body.is-mobile-device #mobile-game-controls button {
     max-width: 100vw !important;
     max-height: 100vh !important;
     box-shadow: none !important; /* Remove shadow */
+    object-fit: contain; /* Prevent stretching */
+  }
+}
+
+/* Portrait mode - show rotate message */
+@media screen and (max-width: 767px) and (orientation: portrait) {
+  #bomberman-container {
+    position: relative;
+  }
+
+  canvas {
+    object-fit: contain !important;
+    width: 100vw !important;
+    height: auto !important;
+    max-height: calc(100vh - 120px) !important; /* Leave space for controls */
+  }
+
+  /* Rotate device message overlay */
+  #rotate-message {
+    display: flex !important;
+  }
+}
+
+/* Landscape mobile */
+@media screen and (max-width: 767px) and (orientation: landscape) {
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    position: fixed; /* Prevent scrolling */
+  }
+
+  #rotate-message {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    padding-bottom: 0 !important; /* Remove padding for fullscreen */
+    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height */
+    width: 100vw !important;
+    max-width: 100% !important;
+    position: relative;
+  }
+
+  #bomberman-container {
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* Use dynamic viewport height */
+    max-width: 100% !important;
+    max-height: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  canvas {
+    border-width: 0 !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100vw !important;
+    min-width: 100% !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    object-fit: contain;
+    display: block;
+    box-shadow: none !important;
+  }
+
+  #mobile-controls {
+    padding: 8px 6px !important;
+    border-top: none !important;
+    background: transparent !important; /* Transparent overlay */
+    backdrop-filter: none !important;
+  }
+
+  .mobile-controls-left {
+    width: 80px;
+    height: 80px;
+  }
+
+  #joystick-container {
+    width: 80px;
+    height: 80px;
+  }
+
+  #joystick-base {
+    width: 80px;
+    height: 80px;
+    margin: -40px 0 0 -40px;
+  }
+
+  #joystick-stick {
+    width: 35px;
+    height: 35px;
+  }
+
+  .mobile-controls-grid {
+    gap: 6px;
+    padding: 0 3px;
+  }
+
+  .mobile-controls-right button {
+    min-height: 35px;
+    font-size: 11px;
+    padding: 5px 8px;
+    min-width: 75px;
+    max-width: 95px;
+  }
+
+  #mobile-game-controls {
+    gap: 5px;
   }
 }
 
@@ -642,98 +762,55 @@ body.is-mobile-device #game-controls {
   }
 }
 
-/* Landscape mobile */
-@media screen and (max-width: 767px) and (orientation: landscape) {
-  html,
-  body {
-    width: 100%;
-    overflow-x: hidden;
-    overflow-y: hidden;
-  }
-
-  main {
-    padding: 0 !important;
-    padding-bottom: 0 !important; /* Remove padding for fullscreen */
-    min-height: 100vh;
-    height: 100vh;
-    width: 100vw !important;
-    max-width: 100% !important;
-  }
-
-  #bomberman-container {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    height: auto;
-    min-width: 100%;
-  }
-
-  canvas {
-    border-width: 0 !important;
-    border-radius: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: 100vw !important;
-    min-width: 100vw !important;
-    max-height: 100vh !important;
-    object-fit: contain;
-    display: block;
-    box-shadow: none !important;
-  }
-
-  #mobile-controls {
-    padding: 8px 6px !important;
-    border-top: none !important;
-    background: transparent !important; /* Transparent overlay */
-    backdrop-filter: none !important;
-  }
-
-  .mobile-controls-left {
-    width: 80px;
-    height: 80px;
-  }
-
-  #joystick-container {
-    width: 80px;
-    height: 80px;
-  }
-
-  #joystick-base {
-    width: 80px;
-    height: 80px;
-    margin: -40px 0 0 -40px;
-  }
-
-  #joystick-stick {
-    width: 35px;
-    height: 35px;
-  }
-
-  .mobile-controls-grid {
-    gap: 6px;
-    padding: 0 3px;
-  }
-
-  .mobile-controls-right button {
-    min-height: 35px;
-    font-size: 11px;
-    padding: 5px 8px;
-    min-width: 75px;
-    max-width: 95px;
-  }
-
-  #mobile-game-controls {
-    gap: 5px;
-  }
-}
-
 /* Tablet Styles */
 @media screen and (min-width: 768px) and (max-width: 1023px) {
   #bomberman-container {
     width: 100%;
     max-width: 768px;
   }
+}
+
+/* Rotate device message overlay */
+#rotate-message {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  font-family: 'BitBold', sans-serif;
+}
+
+#rotate-message div:first-child {
+  font-size: 48px;
+  margin-bottom: 20px;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(90deg);
+  }
+}
+
+#rotate-message div:nth-child(2) {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+#rotate-message div:nth-child(3) {
+  font-size: 14px;
+  opacity: 0.8;
 }
