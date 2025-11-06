@@ -6,6 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
+    <!-- Mobile fullscreen/PWA hints -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="/boom/manifest.webmanifest" />
     <meta name="screen-orientation" content="landscape" />
     <meta
       name="google-site-verification"
@@ -25,10 +31,29 @@
     <link rel="stylesheet" href="/boom/styles/dialog.css" />
 
     <title>Bomberman (NES)</title>
-    <script type="module" crossorigin src="/boom/assets/index-zjN87UHA.js"></script>
+    <script type="module" crossorigin src="/boom/assets/index-D67c0wm1.js"></script>
     <link rel="modulepreload" crossorigin href="/boom/assets/phaser-DJc9ez-r.js">
   </head>
   <body>
+    <script>
+      // Attempt to enter fullscreen on first user interaction (mobile browsers require gesture)
+      (function () {
+        let requested = false;
+        function requestFs() {
+          if (requested) return;
+          requested = true;
+          const el = document.documentElement;
+          const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+          if (req) {
+            try { req.call(el); } catch (e) { /* ignore */ }
+          }
+          // Best-effort hide URL bar on older mobile browsers
+          setTimeout(() => window.scrollTo(0, 1), 50);
+        }
+        window.addEventListener('pointerdown', requestFs, { once: true, passive: true });
+        window.addEventListener('touchstart', requestFs, { once: true, passive: true });
+      })();
+    </script>
     <script>
       // Auto-rotate to landscape on mobile
       (function () {
